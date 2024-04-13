@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 sha2 = "0.10.8"
 generic-array = "1.0.0"
+bit-vec = "0.6"
