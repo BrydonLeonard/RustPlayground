@@ -4,7 +4,7 @@ use sha2::{Sha512, Digest};
 use std::fmt;
 use bit_vec::BitVec;
 
-struct BloomFilter {
+pub struct BloomFilter {
     bits: BitVec, // the bits that actually make up the bloom filter
     hasher_count: usize, // the number of hashers
     hasher_range_in_bits: u32, // the number of bits for each hash value. bits is effectively 2 ^ this value long
@@ -13,7 +13,7 @@ struct BloomFilter {
 const FULL_HASH_BYTES: u32 = 512;
 
 impl BloomFilter { 
-    fn build(hasher_range_in_bits: u32, hasher_count: usize) -> Result<BloomFilter, &'static str> {
+    pub fn build(hasher_range_in_bits: u32, hasher_count: usize) -> Result<BloomFilter, &'static str> {
         if hasher_range_in_bits * (hasher_count as u32) > FULL_HASH_BYTES {
             return Err("The bloom filter is too large for the underlying hashers");
         }
@@ -30,7 +30,7 @@ impl BloomFilter {
     }
 
     // Adds the given string to the bloom filter
-    fn add<T: AsRef<[u8]>>(&mut self, t: &T) {
+    pub fn add<T: AsRef<[u8]>>(&mut self, t: &T) {
         let t_hash = self.hash(t);
 
         for i in t_hash {
@@ -38,7 +38,7 @@ impl BloomFilter {
         }
     }
 
-    fn is_present<T: AsRef<[u8]>>(&self, t: &T) -> BloomCheckResult {
+    pub fn is_present<T: AsRef<[u8]>>(&self, t: &T) -> BloomCheckResult {
         let t_hash = self.hash(t);
 
         for i in t_hash {
@@ -118,7 +118,7 @@ impl fmt::Debug for BloomFilter {
 }
 
 #[derive(PartialEq, Debug)]
-enum BloomCheckResult {
+pub enum BloomCheckResult {
     No,
     Maybe
 }

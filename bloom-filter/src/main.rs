@@ -1,7 +1,8 @@
-use std::hash::{DefaultHasher, Hasher, Hash};
+use bloom_filter::BloomFilter;
 
 fn main() {
-    let mut hasher = DefaultHasher::new();
-    String::from("foo bar").hash(&mut hasher);
-    println!("{}", hasher.finish());
+    let mut bf = BloomFilter::build(4, 4).expect("Sadge");
+    let s = String::from("foo");
+    bf.add(&s);
+    bf.is_present(&s);
 }
