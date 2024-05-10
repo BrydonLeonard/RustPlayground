@@ -33,14 +33,15 @@ fn build_openai_client(args: &Args) -> reqwest::blocking::Client {
 
     reqwest::blocking::Client::builder()
         .default_headers(headers)
+        .timeout(None)
         .build()
         .expect("Failed to build OpenAI client")
 }
 
-fn get_manifesto_summary(client: &reqwest::blocking::Client, manifesto: &str) -> Result<String, &'static str> {
+fn get_manifesto_summary(client: &reqwest::blocking::Client, manifesto: &str) -> Result<String, String> {
 
     let req = OpenAiRequestBody {
-        model: GPT_35_MODEL_NAME,
+        model: GPT_4_MODEL_NAME,
         messages: vec![
             OpenAiRequestMessage {
                 role: "system",
@@ -58,15 +59,23 @@ fn get_manifesto_summary(client: &reqwest::blocking::Client, manifesto: &str) ->
     };
 
 
-    let resp: OpenAiResponse = client
+    let resp = client
         .post(OPENAI_ENDPOINT)
         .json(&req)
         .send()
-        .expect("Couldn't make request")
-        .json()
-        .expect("Couldn't deserialize as JSON");
+        .expect("Couldn't make request");
 
-    Ok(format!("{}", resp))
+    let text: String = resp.text().expect("No text in the response");
+
+    if let Ok(json) = serde_json::from_str::<OpenAiResponse>(&text) {
+        if let Some(response_message) = json.choices.get(0)  {
+            Ok(response_message.message.content.clone())
+        } else {
+            Err(format!("No content in {}", text))
+        }
+    } else {
+        Err(format!("Couldn't deserialize: {}", text))
+    }
 }
 
 mod open_ai {
@@ -74,7 +83,7 @@ mod open_ai {
     use std::fmt;
 
     pub const GPT_35_MODEL_NAME: &str = "gpt-3.5-turbo";
-    pub const _GPT_4_MODEL_NAME: &str = "gpt-4-turbo";
+    pub const GPT_4_MODEL_NAME: &str = "gpt-4-turbo";
 
     #[derive(Serialize)]
     pub struct OpenAiRequestBody<'a> {
